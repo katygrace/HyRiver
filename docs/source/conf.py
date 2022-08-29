@@ -1,20 +1,24 @@
 import datetime
-import os
-import sys
+import urllib.request
+import json
+from pathlib import Path
+from textwrap import dedent, indent
 
-sys.path.insert(0, os.path.abspath("../.."))
+import yaml
+from sphinx.application import Sphinx
+from sphinx.util import logging
 
+
+LOGGER = logging.getLogger("conf")
 
 # -- Project information -----------------------------------------------------
 project = "HyRiver"
 author = "Taher Chegini"
 copyright = f"2019-{datetime.datetime.now().year}, {author}"
 
-from github import Github
-
-repo = Github().get_repo("cheginit/pygeohydro")
-tags = repo.get_tags()
-version = f"{'.'.join(tags[0].name[1:].split('.')[:2])}.x"
+with urllib.request.urlopen('https://pypi.python.org/pypi/pygeohydro/json') as r:
+    version = json.loads(r.read().decode('utf-8'))["info"]["version"]
+version = f"{'.'.join(version.split('.')[:2])}.x"
 release = version
 
 # -- General configuration ---------------------------------------------------
@@ -24,18 +28,15 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.intersphinx",
     "sphinx.ext.extlinks",
-    "sphinx.ext.linkcode",
     "sphinx.ext.mathjax",
+    "sphinx.ext.githubpages",
     "IPython.sphinxext.ipython_directive",
     "IPython.sphinxext.ipython_console_highlighting",
     "nbsphinx",
-    "nbsphinx_link",
-    "sphinx_gallery.load_style",
-    "recommonmark",
-    "sphinx_panels",
     "sphinxext.opengraph",
     "sphinx_copybutton",
     "sphinxcontrib.bibtex",
+    "sphinx_design",
 ]
 
 bibtex_bibfiles = ['refs.bib']
@@ -48,6 +49,7 @@ intersphinx_mapping = {
     "geopandas": ("https://geopandas.org/", None),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "numpy": ("https://numpy.org/doc/stable/", None),
+    "rasterio": ("https://rasterio.readthedocs.io/en/latest", None),
     "scipy": ("https://docs.scipy.org/doc/scipy", None),
     "networkx": ("https://networkx.org/documentation/stable/", None),
     "matplotlib": ("https://matplotlib.org/", None),
@@ -97,7 +99,7 @@ autodoc_typehints_description_target = "documented"
 nbsphinx_timeout = 600
 nbsphinx_execute = "never"
 nbsphinx_prolog = """
-{% set docname = env.doc2path(env.docname, base=None).replace("nblink","ipynb") %}
+{% set docname = env.doc2path(env.docname, base=None).rsplit("/", 1)[-1] %}
 
 .. only:: html
 
@@ -108,9 +110,9 @@ nbsphinx_prolog = """
 
         This page was generated from `{{ docname }}`__.
         Interactive online version:
-        :raw-html:`<a href="https://mybinder.org/v2/gh/cheginit/HyRiver-examples/main?urlpath=lab/tree/{{ docname }}"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg" style="vertical-align:text-bottom"></a>`
+        :raw-html:`<a href="https://mybinder.org/v2/gh/hyriver/HyRiver-examples/main?urlpath=lab/tree/notebooks/{{ docname }}"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg" style="vertical-align:text-bottom"></a>`
 
-    __ https://github.com/cheginit/HyRiver-examples/tree/main/{{ docname }}
+    __ https://github.com/hyriver/HyRiver-examples/tree/main/notebooks/{{ docname }}
 """
 
 # sphinx-copybutton configurations
@@ -167,40 +169,38 @@ napoleon_type_aliases = {
     "Series": "~pandas.Series",
     "DataFrame": "~pandas.DataFrame",
     "Categorical": "~pandas.Categorical",
-    "Path": "~~pathlib.Path",
+    "Path": "~~Path",
     # objects with abbreviated namespace (from pandas)
     "pd.Index": "~pandas.Index",
     "pd.NaT": "~pandas.NaT",
 }
 
-
 extlinks = {
-    "issue": ("https://github.com/cheginit/HyRiver/issues/%s", "GH"),
-    "issue_async": ("https://github.com/cheginit/async_retriever/issues/%s", "GH"),
-    "issue_ogc": ("https://github.com/cheginit/pygeoogc/issues/%s", "GH"),
-    "issue_utils": ("https://github.com/cheginit/pygeoutils/issues/%s", "GH"),
-    "issue_hydro": ("https://github.com/cheginit/pygeohydro/issues/%s", "GH"),
-    "issue_nhd": ("https://github.com/cheginit/pynhd/issues/%s", "GH"),
-    "issue_3dep": ("https://github.com/cheginit/py3dep/issues/%s", "GH"),
-    "issue_day": ("https://github.com/cheginit/pydaymet/issues/%s", "GH"),
-    "pull": ("https://github.com/cheginit/HyRiver/pull/%s", "PR"),
-    "pull_async": ("https://github.com/cheginit/async_retriever/pull/%s", "PR"),
-    "pull_ogc": ("https://github.com/cheginit/pygeoogc/pull/%s", "PR"),
-    "pull_utils": ("https://github.com/cheginit/pygeoutils/pull/%s", "PR"),
-    "pull_hydro": ("https://github.com/cheginit/pygeohydro/pull/%s", "PR"),
-    "pull_nhd": ("https://github.com/cheginit/pynhd/pull/%s", "PR"),
-    "pull_3dep": ("https://github.com/cheginit/py3dep/pull/%s", "PR"),
-    "pull_day": ("https://github.com/cheginit/pydaymet/pull/%s", "PR"),
+    "issue": ("https://github.com/hyriver/hyriver.github.io/issues/%s", "GH"),
+    "issue_async": ("https://github.com/hyriver/async_retriever/issues/%s", "GH"),
+    "issue_ogc": ("https://github.com/hyriver/pygeoogc/issues/%s", "GH"),
+    "issue_utils": ("https://github.com/hyriver/pygeoutils/issues/%s", "GH"),
+    "issue_hydro": ("https://github.com/hyriver/pygeohydro/issues/%s", "GH"),
+    "issue_nhd": ("https://github.com/hyriver/pynhd/issues/%s", "GH"),
+    "issue_3dep": ("https://github.com/hyriver/py3dep/issues/%s", "GH"),
+    "issue_day": ("https://github.com/hyriver/pydaymet/issues/%s", "GH"),
+    "pull": ("https://github.com/hyriver/hyriver.github.io/pull/%s", "PR"),
+    "pull_async": ("https://github.com/hyriver/async_retriever/pull/%s", "PR"),
+    "pull_ogc": ("https://github.com/hyriver/pygeoogc/pull/%s", "PR"),
+    "pull_utils": ("https://github.com/hyriver/pygeoutils/pull/%s", "PR"),
+    "pull_hydro": ("https://github.com/hyriver/pygeohydro/pull/%s", "PR"),
+    "pull_nhd": ("https://github.com/hyriver/pynhd/pull/%s", "PR"),
+    "pull_3dep": ("https://github.com/hyriver/py3dep/pull/%s", "PR"),
+    "pull_day": ("https://github.com/hyriver/pydaymet/pull/%s", "PR"),
 }
 
 # -- Options for HTML output -------------------------------------------------
-
-templates_path = ["_templates"]
+html_static_path = ["_static"]
 html_css_files = ["style.css"]
 today_fmt = "%Y-%m-%d"
 pygments_style = "sphinx"
 
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "tests", ".ipynb_checkpoints"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "tests", ".ipynb_checkpoints", "**.github", "**examples/README.md"]
 
 # sphinx_book_theme configurations
 html_theme = "sphinx_book_theme"
@@ -208,17 +208,17 @@ html_title = ""
 
 html_context = {
     "github_user": "cheginit",
-    "github_repo": "HyRiver",
+    "github_repo": "hyriver.github.io",
     "github_version": "main",
     "doc_path": "docs",
 }
-
+html_baseurl = "https://docs.hyriver.io"
 html_theme_options = {
-    "repository_url": "https://github.com/cheginit/HyRiver",
+    "repository_url": "https://github.com/hyriver/hyriver.github.io",
     "repository_branch": "main",
     "path_to_docs": "docs",
     "launch_buttons": {
-        "binderhub_url": "https://mybinder.org/v2/gh/cheginit/HyRiver-examples/main?urlpath=lab/tree/notebooks",
+        "binderhub_url": "https://mybinder.org/v2/gh/hyriver/HyRiver-examples/main?urlpath=lab/tree/notebooks",
         "notebook_interface": "jupyterlab",
     },
     "use_edit_page_button": True,
@@ -229,8 +229,6 @@ html_theme_options = {
     "extra_navbar": "",
     "navbar_footer_text": "",
 }
-
-html_static_path = ["_static"]
 
 # logo
 html_last_updated_fmt = today_fmt
@@ -246,7 +244,7 @@ description = " ".join(
     ]
 )
 ogp_site_url = "https://hyriver.readthedocs.io/en/latest"
-ogp_image = "https://raw.githubusercontent.com/cheginit/HyRiver/main/docs/source/_static/hydriver_logo.png"
+ogp_image = "https://raw.githubusercontent.com/hyriver/hyriver.github.io/main/docs/source/_static/hydriver_logo.png"
 ogp_custom_meta_tags = [
     '<meta name="twitter:card" content="summary" />',
     '<meta name="twitter:site" content="@_taher_" />',
@@ -256,84 +254,133 @@ ogp_custom_meta_tags = [
     f'<meta name="twitter:image:alt" content="{description}" />',
 ]
 
-# fix an issue with ipython where it doesn't create the missing dirs
-ipython_savefig_dir = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "_build", "html", "_static"
-)
-if not os.path.exists(ipython_savefig_dir):
-    os.makedirs(ipython_savefig_dir)
+# -- Generating Gallery -------------------------------------------------------
+def update_gallery(app: Sphinx):
+    """Update the gallery page.
 
-# -- markdown configurations -------------------------------------------------
-import inspect
-from recommonmark.transform import AutoStructify
-
-github_doc_root = "https://github.com/rtfd/recommonmark/tree/master/doc/"
-
-
-def setup(app):
-    app.add_config_value(
-        "recommonmark_config",
-        {
-            "url_resolver": lambda url: github_doc_root + url,
-            "auto_toc_tree_section": "Contents",
-        },
-        True,
-    )
-    app.add_transform(AutoStructify)
-
-# -- link to source ----------------------------------------------------------
-
-# based on numpy doc/source/conf.py
-def linkcode_resolve(domain, info):
+    Taken from https://github.com/pydata/xarray/blob/main/doc/conf.py
     """
-    Determine the URL corresponding to Python object
+
+    LOGGER.info("Updating gallery page...")
+
+    gallery = yaml.safe_load(Path(app.srcdir, "gallery.yml").read_bytes())
+    for item in gallery:
+        thumb = Path(item['thumbnail'])
+        thumb.parent.mkdir(parents=True, exist_ok=True)
+        thumb.write_bytes(Path(app.srcdir, "examples", "notebooks", "_static", thumb.name).read_bytes())
+
+    items = [
+        f"""
+         .. grid-item-card::
+            :text-align: center
+            :link: {item['path']}
+
+            .. image:: {item['thumbnail']}
+                :alt: {item['title']}
+            +++
+            {item['title']}
+        """
+        for item in gallery
+    ]
+
+    items_md = indent(dedent("\n".join(items)), prefix="    ")
+    markdown = f"""
+.. grid:: 1 2 2 2
+    :gutter: 2
+
+    {items_md}
+"""
+    Path(app.srcdir, "examples-gallery.txt").write_text(markdown)
+    LOGGER.info("Gallery page updated.")
+
+
+def update_videos(app: Sphinx):
+    """Update the videos page.
+
+    Taken from https://github.com/pydata/xarray/blob/main/doc/conf.py
     """
-    if domain != "py":
-        return None
 
-    p_name = info["module"].split(".")[0]
-    p_obj = sys.modules.get(p_name)
+    LOGGER.info("Updating videos page...")
 
-    modname = info["module"]
-    fullname = info["fullname"]
+    videos = yaml.safe_load(Path(app.srcdir, "videos.yml").read_bytes())
 
-    submod = sys.modules.get(modname)
-    if submod is None:
-        return None
+    items = []
+    for video in videos:
 
-    obj = submod
-    for part in fullname.split("."):
-        try:
-            obj = getattr(obj, part)
-        except AttributeError:
-            return None
+        authors = " | ".join(video["authors"])
+        item = f"""
+.. grid-item-card:: {" ".join(video["title"].split())}
+    :text-align: center
 
-    try:
-        fn = inspect.getsourcefile(inspect.unwrap(obj))
-    except TypeError:
-        fn = None
-    if not fn:
-        return None
+    .. raw:: html
 
-    try:
-        source, lineno = inspect.getsourcelines(obj)
-    except OSError:
-        lineno = None
+        {video['src']}
+    +++
+    {authors}
+        """
+        items.append(item)
 
-    if lineno:
-        linespec = f"#L{lineno}-L{lineno + len(source) - 1}"
-    else:
-        linespec = ""
+    items_md = indent(dedent("\n".join(items)), prefix="    ")
+    markdown = f"""
+.. grid:: 1 2 2 2
+    :gutter: 2
 
-    fn = os.path.relpath(fn, start=os.path.dirname(p_obj.__file__))
+    {items_md}
+    """
+    Path(app.srcdir, "videos-gallery.txt").write_text(markdown)
+    LOGGER.info("Videos page updated.")
 
-    if "+" in p_obj.__version__:
-        return f"https://github.com/cheginit/{p_name}/blob/main/{p_name}/{fn}{linespec}"
-    else:
-        return (
-            f"https://github.com/cheginit/{p_name}/blob/"
-            f"v{p_obj.__version__}/{p_name}/{fn}{linespec}"
-        )
+
+def update_versions(app: Sphinx):
+    """Update the versions page."""
+
+    LOGGER.info("Updating versions page...")
+
+    versions = []
+    packages = {
+        "async_retriever": "AsyncRetriever",
+        "pygeoogc": "PyGeoOGC",
+        "pygeoutils": "PyGeoUtils",
+        "pynhd": "PyNHD",
+        "py3dep": "Py3DEP",
+        "pygeohydro": "PyGeoHydro",
+        "pydaymet": "PyDaymet",
+    }
+    for p, n in packages.items():
+        with urllib.request.urlopen(f'https://pypi.python.org/pypi/{p}/json') as r:
+            versions.append(
+                {
+                    "package": n,
+                    "path": f"{p}/index.html",
+                    "version": json.loads(r.read().decode('utf-8'))["info"]["version"],
+                }
+            )
+
+    items = [
+        f"""
+         .. grid-item-card:: {item['package']}
+            :text-align: center
+
+            .. button-link:: {item['path']}
+                :click-parent:
+                :ref-type: ref
+                :align: center
+
+                v{item['version']}
+        """
+        for item in versions
+    ]
+
+    items_md = indent(dedent("\n".join(items)), prefix="    ")
+    markdown = f"""
+.. grid::
+    :gutter: 3
+
+    {items_md}
+"""
+    Path(app.srcdir, "versions.txt").write_text(markdown)
+    LOGGER.info("Package versions page updated.")
+
 
 def html_page_context(app, pagename, templatename, context, doctree):
     # Disable edit button for docstring generated pages
@@ -341,5 +388,8 @@ def html_page_context(app, pagename, templatename, context, doctree):
         context["theme_use_edit_page_button"] = False
 
 
-def setup(app):
+def setup(app: Sphinx):
     app.connect("html-page-context", html_page_context)
+    app.connect("builder-inited", update_gallery)
+    app.connect("builder-inited", update_videos)
+    app.connect("builder-inited", update_versions)

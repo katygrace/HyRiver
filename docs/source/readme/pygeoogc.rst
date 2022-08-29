@@ -9,8 +9,8 @@ PyGeoOGC: Retrieve Data from RESTful, WMS, and WFS Services
     :target: https://anaconda.org/conda-forge/pygeoogc
     :alt: Conda Version
 
-.. image:: https://codecov.io/gh/cheginit/pygeoogc/branch/main/graph/badge.svg
-    :target: https://codecov.io/gh/cheginit/pygeoogc
+.. image:: https://codecov.io/gh/hyriver/pygeoogc/branch/main/graph/badge.svg
+    :target: https://codecov.io/gh/hyriver/pygeoogc
     :alt: CodeCov
 
 .. image:: https://img.shields.io/pypi/pyversions/pygeoogc.svg
@@ -27,8 +27,8 @@ PyGeoOGC: Retrieve Data from RESTful, WMS, and WFS Services
     :target: https://github.com/PyCQA/bandit
     :alt: Security Status
 
-.. image:: https://www.codefactor.io/repository/github/cheginit/pygeoogc/badge
-   :target: https://www.codefactor.io/repository/github/cheginit/pygeoogc
+.. image:: https://www.codefactor.io/repository/github/hyriver/pygeoogc/badge
+   :target: https://www.codefactor.io/repository/github/hyriver/pygeoogc
    :alt: CodeFactor
 
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
@@ -40,7 +40,7 @@ PyGeoOGC: Retrieve Data from RESTful, WMS, and WFS Services
     :alt: pre-commit
 
 .. image:: https://mybinder.org/badge_logo.svg
-    :target: https://mybinder.org/v2/gh/cheginit/HyRiver-examples/main?urlpath=lab/tree/notebooks
+    :target: https://mybinder.org/v2/gh/hyriver/HyRiver-examples/main?urlpath=lab/tree/notebooks
     :alt: Binder
 
 |
@@ -48,31 +48,48 @@ PyGeoOGC: Retrieve Data from RESTful, WMS, and WFS Services
 Features
 --------
 
-PyGeoOGC is a part of `HyRiver <https://github.com/cheginit/HyRiver>`__ software stack that
-is designed to aid in watershed analysis through web services. This package provides
+PyGeoOGC is a part of `HyRiver <https://github.com/hyriver/HyRiver>`__ software stack that
+is designed to aid in hydroclimate analysis through web services. This package provides
 general interfaces to web services that are based on
 `ArcGIS RESTful <https://en.wikipedia.org/wiki/Representational_state_transfer>`__,
 `WMS <https://en.wikipedia.org/wiki/Web_Map_Service>`__, and
 `WFS <https://en.wikipedia.org/wiki/Web_Feature_Service>`__. Although
-all these web service have limits on the number of features per requests (e.g., 1000
-object IDs for a RESTful request or 8 million pixels for a WMS request), PyGeoOGC divides
-requests into smaller chunks, under-the-hood, and then merges the results.
+all these web services have limits on the number of features per request (e.g., 1000
+object IDs for a RESTful request or 8 million pixels for a WMS request), PyGeoOGC, first, divides
+the large requests into smaller chunks, and then returns the merged results.
 
-All functions and classes that request data from web services use ``async_retriever``
-that offers response caching. By default, the expiration time is set to never expire.
-All these functions and classes have two optional parameters for controlling the cache:
-``expire_after`` and ``disable_caching``. You can use ``expire_after`` to set the expiration
-time in seconds. If ``expire_after`` is set to ``-1``, the cache will never expire (default).
-You can use ``disable_caching`` if you don't want to use the cached responses. The cached
-responses are stored in the ``./cache/aiohttp_cache.sqlite`` file.
+Moreover, under the hood, PyGeoOGC uses
+`AsyncRetriever <https://github.com/hyriver/async_retriever>`__
+for making requests asynchronously with persistent caching. This improves the
+reliability and speed of data retrieval significantly. AsyncRetriever caches all request/response
+pairs and upon making an already cached request, it will retrieve the responses from the cache
+if the server's response is unchanged.
+
+You can control the request/response caching behavior by setting the following
+environment variables:
+
+* ``HYRIVER_CACHE_NAME``: Path to the caching SQLite database. It defaults to
+  ``./cache/aiohttp_cache.sqlite``
+* ``HYRIVER_CACHE_EXPIRE``: Expiration time for cached requests in seconds. It defaults to
+  -1 (never expire).
+* ``HYRIVER_CACHE_DISABLE``: Disable reading/writing from/to the cache. The default is false.
+
+For example, in your code before making any requests you can do:
+
+.. code-block:: python
+
+    import os
+
+    os.environ["HYRIVER_CACHE_NAME"] = "path/to/file.sqlite"
+    os.environ["HYRIVER_CACHE_EXPIRE"] = "3600"
+    os.environ["HYRIVER_CACHE_DISABLE"] = "true"
 
 There is also an inventory of URLs for some of these web services in form of a class called
 ``ServiceURL``. These URLs are in four categories: ``ServiceURL().restful``,
 ``ServiceURL().wms``, ``ServiceURL().wfs``, and ``ServiceURL().http``. These URLs provide you
-with some examples of the services that PyGeoOGC supports. All the URLs are read from a YAML
-file located `here <pygeoogc/static/urls.yml>`_. If you have success using PyGeoOGC with a web
-service please consider submitting a request to be added to this URL inventory, located at
-``pygeoogc/static/urls.yml``.
+with some examples of the services that PyGeoOGC supports. If you have success using PyGeoOGC with a web
+service please consider submitting a request to be added to this URL inventory. You can get all
+the URLs in the ``ServiceURL`` class by just printing it ``print(ServiceURL())``.
 
 PyGeoOGC has three main classes:
 
@@ -89,7 +106,7 @@ PyGeoOGC has three main classes:
   field IDs), or ``oids_bysql`` (any valid SQL 92 WHERE clause) class methods. Then, we can get
   the target features using ``get_features`` class method. The returned response can be converted
   into a GeoDataFrame using ``json2geodf`` function from
-  `PyGeoUtils <https://github.com/cheginit/pygeoutils>`__.
+  `PyGeoUtils <https://github.com/hyriver/pygeoutils>`__.
 
 * ``WMS``: Instantiation of this class requires at least 3 arguments: service URL, layer
   name(s), and output format. Additionally, target CRS and the web service version can be provided.
@@ -111,20 +128,33 @@ PyGeoOGC has three main classes:
   You can convert the returned response of this function to a ``GeoDataFrame`` using ``json2geodf``
   function from PyGeoUtils package.
 
-You can find some example notebooks `here <https://github.com/cheginit/HyRiver-examples>`__.
+You can find some example notebooks `here <https://github.com/hyriver/HyRiver-examples>`__.
 
-Furthermore, you can try using PyGeoOGC without even installing it on your system by
-clicking on the binder badge below the PyGeoOGC banner. A JupyterLab instance
-with the software stack pre-installed and all example notebooks will be launched
-in your web browser, and you can start coding!
-
-Please note that since this project is in early development stages, while the provided
-functionalities should be stable, changes in APIs are possible in new releases. But we
-appreciate it if you give this project a try and provide feedback.
-Contributions are most welcome.
+Furthermore, you can also try using PyGeoOGC without installing
+it on your system by clicking on the binder badge. A Jupyter Lab
+instance with the HyRiver stack pre-installed will be launched in your web browser, and you
+can start coding!
 
 Moreover, requests for additional functionalities can be submitted via
-`issue tracker <https://github.com/cheginit/pygeoogc/issues>`__.
+`issue tracker <https://github.com/hyriver/pygeoogc/issues>`__.
+
+Citation
+--------
+If you use any of HyRiver packages in your research, we appreciate citations:
+
+.. code-block:: bibtex
+
+    @article{Chegini_2021,
+        author = {Chegini, Taher and Li, Hong-Yi and Leung, L. Ruby},
+        doi = {10.21105/joss.03175},
+        journal = {Journal of Open Source Software},
+        month = {10},
+        number = {66},
+        pages = {1--3},
+        title = {{HyRiver: Hydroclimate Data Retriever}},
+        volume = {6},
+        year = {2021}
+    }
 
 Installation
 ------------
@@ -153,7 +183,7 @@ via RESTful service,
 `FEMA National Flood Hazard <https://www.fema.gov/national-flood-hazard-layer-nfhl>`__
 via WFS. The output for these functions are of type ``requests.Response`` that
 can be converted to ``GeoDataFrame`` or ``xarray.Dataset`` using
-`PyGeoUtils <https://github.com/cheginit/pygeoutils>`__.
+`PyGeoUtils <https://github.com/hyriver/pygeoutils>`__.
 
 Let's start the National Map's NHDPlus HR web service. We can query the flowlines that are
 within a geometry as follows:
@@ -240,6 +270,6 @@ any valid `CQL filter <https://docs.geoserver.org/stable/en/user/tutorials/cql/c
     r = wfs.getfeature_byfilter(f"huc8 LIKE '13030%'")
     huc8 = geoutils.json2geodf(r.json(), "epsg:4269", "epsg:4326")
 
-.. image:: https://raw.githubusercontent.com/cheginit/HyRiver-examples/main/notebooks/_static/sql_clause.png
-    :target: https://github.com/cheginit/HyRiver-examples/blob/main/notebooks/webservices.ipynb
+.. image:: https://raw.githubusercontent.com/hyriver/HyRiver-examples/main/notebooks/_static/sql_clause.png
+    :target: https://github.com/hyriver/HyRiver-examples/blob/main/notebooks/webservices.ipynb
 

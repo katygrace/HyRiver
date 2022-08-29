@@ -9,8 +9,8 @@ PyDaymet: Daily climate data through Daymet
     :target: https://anaconda.org/conda-forge/pydaymet
     :alt: Conda Version
 
-.. image:: https://codecov.io/gh/cheginit/pydaymet/branch/main/graph/badge.svg
-    :target: https://codecov.io/gh/cheginit/pydaymet
+.. image:: https://codecov.io/gh/hyriver/pydaymet/branch/main/graph/badge.svg
+    :target: https://codecov.io/gh/hyriver/pydaymet
     :alt: CodeCov
 
 .. image:: https://img.shields.io/pypi/pyversions/pydaymet.svg
@@ -23,8 +23,8 @@ PyDaymet: Daily climate data through Daymet
 
 |
 
-.. image:: https://www.codefactor.io/repository/github/cheginit/pydaymet/badge
-   :target: https://www.codefactor.io/repository/github/cheginit/pydaymet
+.. image:: https://www.codefactor.io/repository/github/hyriver/pydaymet/badge
+   :target: https://www.codefactor.io/repository/github/hyriver/pydaymet
    :alt: CodeFactor
 
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
@@ -36,7 +36,7 @@ PyDaymet: Daily climate data through Daymet
     :alt: pre-commit
 
 .. image:: https://mybinder.org/badge_logo.svg
-    :target: https://mybinder.org/v2/gh/cheginit/HyRiver-examples/main?urlpath=lab/tree/notebooks
+    :target: https://mybinder.org/v2/gh/hyriver/HyRiver-examples/main?urlpath=lab/tree/notebooks
     :alt: Binder
 
 |
@@ -44,8 +44,8 @@ PyDaymet: Daily climate data through Daymet
 Features
 --------
 
-PyDaymet is a part of `HyRiver <https://github.com/cheginit/HyRiver>`__ software stack that
-is designed to aid in watershed analysis through web services. This package provides
+PyDaymet is a part of `HyRiver <https://github.com/hyriver/HyRiver>`__ software stack that
+is designed to aid in hydroclimate analysis through web services. This package provides
 access to climate data from
 `Daymet V4 <https://daac.ornl.gov/DAYMET/guides/Daymet_Daily_V4.html>`__ database using NetCDF
 Subset Service (NCSS). Both single pixel (using ``get_bycoords`` function) and gridded data (using
@@ -56,21 +56,59 @@ and annual. Additionally, PyDaymet can compute Potential EvapoTranspiration (PET
 using three methods: ``penman_monteith``, ``priestley_taylor``, and ``hargreaves_samani`` for
 both single pixel and gridded data.
 
-To fully utilize the capabilities of the NCSS, under-the-hood, PyDaymet uses
-`AsyncRetriever <https://github.com/cheginit/async_retriever>`__
-for retrieving Daymet data asynchronously with persistent caching. This improves the reliability
-and speed of data retrieval significantly.
+You can find some example notebooks `here <https://github.com/hyriver/HyRiver-examples>`__.
 
-You can try using PyDaymet without installing it on you system by clicking on the binder badge
-below the PyDaymet banner. A Jupyter notebook instance with the stack
-pre-installed will be launched in your web browser and you can start coding!
+Moreover, under the hood, PyDaymet uses
+`AsyncRetriever <https://github.com/hyriver/async_retriever>`__
+for making requests asynchronously with persistent caching. This improves the
+reliability and speed of data retrieval significantly. AsyncRetriever caches all request/response
+pairs and upon making an already cached request, it will retrieve the responses from the cache
+if the server's response is unchanged.
 
-Please note that since this project is in early development stages, while the provided
-functionalities should be stable, changes in APIs are possible in new releases. But we
-appreciate it if you give this project a try and provide feedback. Contributions are most welcome.
+You can control the request/response caching behavior by setting the following
+environment variables:
+
+* ``HYRIVER_CACHE_NAME``: Path to the caching SQLite database. It defaults to
+  ``./cache/aiohttp_cache.sqlite``
+* ``HYRIVER_CACHE_EXPIRE``: Expiration time for cached requests in seconds. It defaults to
+  -1 (never expire).
+* ``HYRIVER_CACHE_DISABLE``: Disable reading/writing from/to the cache. The default is false.
+
+For example, in your code before making any requests you can do:
+
+.. code-block:: python
+
+    import os
+
+    os.environ["HYRIVER_CACHE_NAME"] = "path/to/file.sqlite"
+    os.environ["HYRIVER_CACHE_EXPIRE"] = "3600"
+    os.environ["HYRIVER_CACHE_DISABLE"] = "true"
+
+You can also try using PyDaymet without installing
+it on your system by clicking on the binder badge. A Jupyter Lab
+instance with the HyRiver stack pre-installed will be launched in your web browser, and you
+can start coding!
 
 Moreover, requests for additional functionalities can be submitted via
-`issue tracker <https://github.com/cheginit/pydaymet/issues>`__.
+`issue tracker <https://github.com/hyriver/pydaymet/issues>`__.
+
+Citation
+--------
+If you use any of HyRiver packages in your research, we appreciate citations:
+
+.. code-block:: bibtex
+
+    @article{Chegini_2021,
+        author = {Chegini, Taher and Li, Hong-Yi and Leung, L. Ruby},
+        doi = {10.21105/joss.03175},
+        journal = {Journal of Open Source Software},
+        month = {10},
+        number = {66},
+        pages = {1--3},
+        title = {{HyRiver: Hydroclimate Data Retriever}},
+        volume = {6},
+        year = {2021}
+    }
 
 Installation
 ------------
@@ -140,8 +178,8 @@ The ``coords`` sub-command is as follows:
         - ``lat``: Latitude of the points of interest.
         - ``time_scale``: (optional) Time scale, either ``daily`` (default), ``monthly`` or ``annual``.
         - ``pet``: (optional) Method to compute PET. Suppoerted methods are:
-                   ``penman_monteith``, ``hargreaves_samani``, ``priestley_taylor``, and ``none`` (default).
-        - ``alpha``: (optional) Alpha parameter for Priestley-Taylor method for computing PET. Defaults to 1.26.
+                    ``penman_monteith``, ``hargreaves_samani``, ``priestley_taylor``, and ``none`` (default).
+        - ``snow``: (optional) Separate snowfall from precipitation, default is ``False``.
 
     Examples:
         $ cat coords.csv
@@ -152,11 +190,10 @@ The ``coords`` sub-command is as follows:
     Options:
     -v, --variables TEXT  Target variables. You can pass this flag multiple
                             times for multiple variables.
-
     -s, --save_dir PATH   Path to a directory to save the requested files.
                             Extension for the outputs is .nc for geometry and .csv
                             for coords.
-
+    --disable_ssl         Pass to disable SSL certification verification.
     -h, --help            Show this message and exit.
 
 And, the ``geometry`` sub-command is as follows:
@@ -176,8 +213,8 @@ And, the ``geometry`` sub-command is as follows:
         - ``geometry``: Target geometries.
         - ``time_scale``: (optional) Time scale, either ``daily`` (default), ``monthly`` or ``annual``.
         - ``pet``: (optional) Method to compute PET. Suppoerted methods are:
-                   ``penman_monteith``, ``hargreaves_samani``, ``priestley_taylor``, and ``none`` (default).
-        - ``alpha``: (optional) Alpha parameter for Priestley-Taylor method for computing PET. Defaults to 1.26.
+                    ``penman_monteith``, ``hargreaves_samani``, ``priestley_taylor``, and ``none`` (default).
+        - ``snow``: (optional) Separate snowfall from precipitation, default is ``False``.
 
     Examples:
         $ pydaymet geometry geo.gpkg -v prcp -v tmin
@@ -185,11 +222,10 @@ And, the ``geometry`` sub-command is as follows:
     Options:
     -v, --variables TEXT  Target variables. You can pass this flag multiple
                             times for multiple variables.
-
     -s, --save_dir PATH   Path to a directory to save the requested files.
                             Extension for the outputs is .nc for geometry and .csv
                             for coords.
-
+    --disable_ssl         Pass to disable SSL certification verification.
     -h, --help            Show this message and exit.
 
 Now, let's see how we can use PyDaymet as a library.
@@ -197,9 +233,11 @@ Now, let's see how we can use PyDaymet as a library.
 PyDaymet offers two functions for getting climate data; ``get_bycoords`` and ``get_bygeom``.
 The arguments of these functions are identical except the first argument where the latter
 should be polygon and the former should be a coordinate (a tuple of length two as in (x, y)).
-The input geometry or coordinate can be in any valid CRS (defaults to EPSG:4326). The ``dates``
-argument can be either a tuple of length two like ``(start_str, end_str)`` or a list of years
-like ``[2000, 2005]``. It is noted that both functions have a ``pet`` flag for computing PET.
+The input geometry or coordinate can be in any valid CRS (defaults to ``EPSG:4326``). The
+``dates`` argument can be either a tuple of length two like ``(start_str, end_str)`` or a list of
+years like ``[2000, 2005]``. It is noted that both functions have a ``pet`` flag for computing PET
+and a ``snow`` flag for separating snow from precipitation using
+`Martinez and Gupta (2010) <https://doi.org/10.1029/2009WR008294>`__ method.
 Additionally, we can pass ``time_scale`` to get daily, monthly or annual summaries. This flag
 by default is set to daily.
 
@@ -213,13 +251,13 @@ by default is set to daily.
     var = ["prcp", "tmin"]
     dates = ("2000-01-01", "2000-06-30")
 
-    daily = daymet.get_bygeom(geometry, dates, variables=var, pet="priestley_taylor")
+    daily = daymet.get_bygeom(geometry, dates, variables=var, pet="priestley_taylor", snow=True)
     monthly = daymet.get_bygeom(geometry, dates, variables=var, time_scale="monthly")
 
-.. image:: https://raw.githubusercontent.com/cheginit/HyRiver-examples/main/notebooks/_static/daymet_grid.png
-    :target: https://github.com/cheginit/HyRiver-examples/blob/main/notebooks/daymet.ipynb
+.. image:: https://raw.githubusercontent.com/hyriver/HyRiver-examples/main/notebooks/_static/daymet_grid.png
+    :target: https://github.com/hyriver/HyRiver-examples/blob/main/notebooks/daymet.ipynb
 
-If the input geometry (or coordinate) is in a CRS other than EPSG:4326, we should pass
+If the input geometry (or coordinate) is in a CRS other than ``EPSG:4326``, we should pass
 it to the functions.
 
 .. code-block:: python
@@ -229,8 +267,8 @@ it to the functions.
     dates = ("2000-01-01", "2006-12-31")
     annual = daymet.get_bycoords(coords, dates, variables=var, loc_crs=crs, time_scale="annual")
 
-.. image:: https://raw.githubusercontent.com/cheginit/HyRiver-examples/main/notebooks/_static/daymet_loc.png
-    :target: https://github.com/cheginit/HyRiver-examples/blob/main/notebooks/daymet.ipynb
+.. image:: https://raw.githubusercontent.com/hyriver/HyRiver-examples/main/notebooks/_static/daymet_loc.png
+    :target: https://github.com/hyriver/HyRiver-examples/blob/main/notebooks/daymet.ipynb
 
 Also, we can use the ``potential_et`` function to compute PET by passing the daily climate data.
 We can either pass a ``pandas.DataFrame`` or a ``xarray.Dataset``. Note that, ``penman_monteith``
@@ -254,8 +292,8 @@ Next, let's get annual total precipitation for Hawaii and Puerto Rico for 2010.
 
 Some example plots are shown below:
 
-.. image:: https://raw.githubusercontent.com/cheginit/HyRiver-examples/main/notebooks/_static/hi.png
-    :target: https://github.com/cheginit/HyRiver-examples/blob/main/notebooks/daymet.ipynb
+.. image:: https://raw.githubusercontent.com/hyriver/HyRiver-examples/main/notebooks/_static/hi.png
+    :target: https://github.com/hyriver/HyRiver-examples/blob/main/notebooks/daymet.ipynb
 
-.. image:: https://raw.githubusercontent.com/cheginit/HyRiver-examples/main/notebooks/_static/pr.png
-    :target: https://github.com/cheginit/HyRiver-examples/blob/main/notebooks/daymet.ipynb
+.. image:: https://raw.githubusercontent.com/hyriver/HyRiver-examples/main/notebooks/_static/pr.png
+    :target: https://github.com/hyriver/HyRiver-examples/blob/main/notebooks/daymet.ipynb

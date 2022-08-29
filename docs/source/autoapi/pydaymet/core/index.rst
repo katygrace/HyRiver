@@ -12,7 +12,7 @@
 Module Contents
 ---------------
 
-.. py:class:: Daymet(variables = None, pet = None, time_scale = 'daily', region = 'na')
+.. py:class:: Daymet(variables = None, pet = None, snow = False, time_scale = 'daily', region = 'na')
 
    Base class for Daymet requests.
 
@@ -28,6 +28,7 @@ Module Contents
                   :footcite:t:`Priestley_1972` assuming that soil heat flux density is zero.
                   The ``hargreaves_samani`` method is based on :footcite:t:`Hargreaves_1982`.
                   Defaults to ``None``.
+                * **snow** (:class:`bool`, *optional*) -- Compute snowfall from precipitation and minimum temperature. Defaults to ``False``.
                 * **time_scale** (:class:`str`, *optional*) -- Data time scale which can be daily, monthly (monthly summaries),
                   or annual (annual summaries). Defaults to daily.
                 * **region** (:class:`str`, *optional*) -- Region in the US, defaults to na. Acceptable values are:
@@ -46,12 +47,12 @@ Module Contents
       Check if input dates are in correct format and valid.
 
 
-   .. py:method:: dates_todict(self, dates)
+   .. py:method:: dates_todict(dates)
 
       Set dates by start and end dates as a tuple, (start, end).
 
 
-   .. py:method:: dates_tolist(self, dates)
+   .. py:method:: dates_tolist(dates)
 
       Correct dates for Daymet accounting for leap years.
 
@@ -63,12 +64,28 @@ Module Contents
       :returns: :class:`list` -- All the dates in the Daymet database within the provided date range.
 
 
-   .. py:method:: years_todict(self, years)
+   .. py:method:: separate_snow(clm, t_rain = T_RAIN, t_snow = T_SNOW)
+
+      Separate snow based on :footcite:t:`Martinez_2010`.
+
+      :Parameters: * **clm** (:class:`pandas.DataFrame` or :class:`xarray.Dataset`) -- Climate data that should include ``prcp`` and ``tmin``.
+                   * **t_rain** (:class:`float`, *optional*) -- Threshold for temperature for considering rain, defaults to 2.5 degrees C.
+                   * **t_snow** (:class:`float`, *optional*) -- Threshold for temperature for considering snow, defaults to 0.6 degrees C.
+
+      :returns: :class:`pandas.DataFrame` or :class:`xarray.Dataset` -- Input data with ``snow (mm/day)`` column if input is a ``pandas.DataFrame``,
+                or ``snow`` variable if input is an ``xarray.Dataset``.
+
+      .. rubric:: References
+
+      .. footbibliography::
+
+
+   .. py:method:: years_todict(years)
 
       Set date by list of year(s).
 
 
-   .. py:method:: years_tolist(self, years)
+   .. py:method:: years_tolist(years)
 
       Correct dates for Daymet accounting for leap years.
 

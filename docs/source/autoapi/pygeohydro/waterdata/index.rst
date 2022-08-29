@@ -12,25 +12,24 @@
 Module Contents
 ---------------
 
-.. py:class:: NWIS(expire_after = EXPIRE, disable_caching = False)
+.. py:class:: NWIS
 
    Access NWIS web service.
 
-   :Parameters: * **expire_after** (:class:`int`, *optional*) -- Expiration time for response caching in seconds, defaults to -1 (never expire).
-                * **disable_caching** (:class:`bool`, *optional*) -- If ``True``, disable caching requests, defaults to False.
-
-   .. py:method:: get_info(self, queries, expanded = False)
+   .. py:method:: get_info(queries, expanded = False, fix_names = True)
 
       Send multiple queries to USGS Site Web Service.
 
       :Parameters: * **queries** (:class:`dict` or :class:`list` of :class:`dict`) -- A single or a list of valid queries.
                    * **expanded** (:class:`bool`, *optional*) -- Whether to get expanded sit information for example drainage area,
                      default to False.
+                   * **fix_names** (:class:`bool`, *optional*) -- If ``True``, reformat station names and some small annoyances,
+                     defaults to ``True``.
 
       :returns: :class:`geopandas.GeoDataFrame` -- A correctly typed ``GeoDataFrame`` containing site(s) information.
 
 
-   .. py:method:: get_parameter_codes(self, keyword)
+   .. py:method:: get_parameter_codes(keyword)
 
       Search for parameter codes by name or number.
 
@@ -57,7 +56,7 @@ Module Contents
       'Discharge, cubic feet per second'
 
 
-   .. py:method:: get_streamflow(self, station_ids, dates, freq = 'dv', mmd = False, to_xarray = False)
+   .. py:method:: get_streamflow(station_ids, dates, freq = 'dv', mmd = False, to_xarray = False)
 
       Get mean daily streamflow observations from USGS.
 
@@ -75,7 +74,8 @@ Module Contents
                 Note that when frequency is set to ``iv`` the time zone is converted to UTC.
 
 
-   .. py:method:: retrieve_rdb(self, url, payloads)
+   .. py:method:: retrieve_rdb(url, payloads)
+      :staticmethod:
 
       Retrieve and process requests with RDB format.
 
@@ -88,7 +88,7 @@ Module Contents
 
 
 
-.. py:class:: WaterQuality(expire_after = EXPIRE, disable_caching = False)
+.. py:class:: WaterQuality
 
    Water Quality Web Service https://www.waterqualitydata.us.
 
@@ -104,10 +104,7 @@ Module Contents
    consult the
    `Water Quality Data documentation <https://www.waterqualitydata.us/webservices_documentation>`__.
 
-   :Parameters: * **expire_after** (:class:`int`, *optional*) -- Expiration time for response caching in seconds, defaults to -1 (never expire).
-                * **disable_caching** (:class:`bool`, *optional*) -- If ``True``, disable caching requests, defaults to False.
-
-   .. py:method:: data_bystation(self, station_ids, wq_kwds)
+   .. py:method:: data_bystation(station_ids, wq_kwds)
 
       Retrieve data for a single station.
 
@@ -117,7 +114,7 @@ Module Contents
       :returns: :class:`pandas.DataFrame` -- DataFrame of data for the stations.
 
 
-   .. py:method:: get_csv(self, endpoint, kwds, request_method = 'GET')
+   .. py:method:: get_csv(endpoint, kwds, request_method = 'GET')
 
       Get the CSV response from the Water Quality Web Service.
 
@@ -128,7 +125,7 @@ Module Contents
       :returns: :class:`pandas.DataFrame` -- The web service response as a DataFrame.
 
 
-   .. py:method:: get_json(self, endpoint, kwds, request_method = 'GET')
+   .. py:method:: get_json(endpoint, kwds, request_method = 'GET')
 
       Get the JSON response from the Water Quality Web Service.
 
@@ -139,17 +136,17 @@ Module Contents
       :returns: :class:`geopandas.GeoDataFrame` -- The web service response as a GeoDataFrame.
 
 
-   .. py:method:: get_param_table(self)
+   .. py:method:: get_param_table()
 
       Get the parameter table from the USGS Water Quality Web Service.
 
 
-   .. py:method:: lookup_domain_values(self, endpoint)
+   .. py:method:: lookup_domain_values(endpoint)
 
       Get the domain values for the target endpoint.
 
 
-   .. py:method:: station_bybbox(self, bbox, wq_kwds)
+   .. py:method:: station_bybbox(bbox, wq_kwds)
 
       Retrieve station info within bounding box.
 
@@ -159,7 +156,7 @@ Module Contents
       :returns: :class:`geopandas.GeoDataFrame` -- GeoDataFrame of station info within the bounding box.
 
 
-   .. py:method:: station_bydistance(self, lon, lat, radius, wq_kwds)
+   .. py:method:: station_bydistance(lon, lat, radius, wq_kwds)
 
       Retrieve station within a radius (decimal miles) of a point.
 
@@ -172,7 +169,7 @@ Module Contents
 
 
 
-.. py:function:: interactive_map(bbox, crs = DEF_CRS, nwis_kwds = None, expire_after = EXPIRE, disable_caching = False)
+.. py:function:: interactive_map(bbox, crs = DEF_CRS, nwis_kwds = None)
 
    Generate an interactive map including all USGS stations within a bounding box.
 
@@ -181,8 +178,6 @@ Module Contents
                 * **nwis_kwds** (:class:`dict`, *optional*) -- Optional keywords to include in the NWIS request as a dictionary like so:
                   ``{"hasDataTypeCd": "dv,iv", "outputDataTypeCd": "dv,iv", "parameterCd": "06000"}``.
                   Default to None.
-                * **expire_after** (:class:`int`, *optional*) -- Expiration time for response caching in seconds, defaults to -1 (never expire).
-                * **disable_caching** (:class:`bool`, *optional*) -- If ``True``, disable caching requests, defaults to False.
 
    :returns: :class:`folium.Map` -- Interactive map within a bounding box.
 

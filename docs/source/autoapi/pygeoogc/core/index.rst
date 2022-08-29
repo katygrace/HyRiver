@@ -12,7 +12,7 @@
 Module Contents
 ---------------
 
-.. py:class:: ArcGISRESTfulBase(base_url, layer = None, outformat = 'geojson', outfields = '*', crs = DEF_CRS, max_workers = 1, verbose = False, disable_retry = False, expire_after = EXPIRE, disable_caching = False)
+.. py:class:: ArcGISRESTfulBase(base_url, layer = None, outformat = 'geojson', outfields = '*', crs = DEF_CRS, max_workers = 1, verbose = False, disable_retry = False)
 
    Access to an ArcGIS REST service.
 
@@ -37,15 +37,13 @@ Module Contents
                 * **disable_retry** (:class:`bool`, *optional*) -- If ``True`` in case there are any failed queries, no retrying attempts
                   is done and object IDs of the failed requests is saved to a text file
                   which its path can be accessed via ``self.failed_path``.
-                * **expire_after** (:class:`int`, *optional*) -- Expiration time for response caching in seconds, defaults to -1 (never expire).
-                * **disable_caching** (:class:`bool`, *optional*) -- If ``True``, disable caching requests, defaults to False.
 
-   .. py:method:: esri_query(self, geom, geo_crs = DEF_CRS)
+   .. py:method:: esri_query(geom, geo_crs = DEF_CRS)
 
       Generate geometry queries based on ESRI template.
 
 
-   .. py:method:: get_features(self, featureids, return_m = False, return_geom = True)
+   .. py:method:: get_features(featureids, return_m = False, return_geom = True)
 
       Get features based on the feature IDs.
 
@@ -57,28 +55,28 @@ Module Contents
       :returns: :class:`dict` -- (Geo)json response from the web service.
 
 
-   .. py:method:: get_response(self, url, payloads, method = 'GET')
+   .. py:method:: get_response(url, payloads, method = 'GET')
 
       Send payload and get the response.
 
 
-   .. py:method:: initialize_service(self)
+   .. py:method:: initialize_service()
 
       Initialize the RESTFul service.
 
 
-   .. py:method:: partition_oids(self, oids)
+   .. py:method:: partition_oids(oids)
 
       Partition feature IDs based on ``self.max_nrecords``.
 
 
-   .. py:method:: retry_failed_requests(self)
+   .. py:method:: retry_failed_requests()
 
       Retry failed requests.
 
 
 
-.. py:class:: RESTValidator(__pydantic_self__, **data)
+.. py:class:: RESTValidator(**data)
 
 
 
@@ -103,11 +101,9 @@ Module Contents
                 * **disable_retry** (:class:`bool`, *optional*) -- If ``True`` in case there are any failed queries, no retrying attempts
                   is done and object IDs of the failed requests is saved to a text file
                   which its path can be accessed via ``self.failed_path``.
-                * **expire_after** (:class:`int`, *optional*) -- Expiration time for response caching in seconds, defaults to -1 (never expire).
-                * **disable_caching** (:class:`bool`, *optional*) -- If ``True``, disable caching requests, defaults to False.
 
 
-.. py:class:: WFSBase(__pydantic_self__, **data)
+.. py:class:: WFSBase(**data)
 
 
 
@@ -130,21 +126,19 @@ Module Contents
                 * **max_nrecords** (:class:`int`, *optional*) -- The maximum number of records in a single request to be retrieved from the service,
                   defaults to 1000. If the number of requested records is greater than this value,
                   the query will be split into multiple requests.
-                * **expire_after** (:class:`int`, *optional*) -- Expiration time for response caching in seconds, defaults to -1 (never expire).
-                * **disable_caching** (:class:`bool`, *optional*) -- If ``True``, disable caching requests, defaults to ``False``.
 
-   .. py:method:: get_validnames(self)
+   .. py:method:: get_validnames()
 
       Get valid column names for a layer.
 
 
-   .. py:method:: validate_wfs(self)
+   .. py:method:: validate_wfs()
 
       Validate input arguments with the WFS service.
 
 
 
-.. py:class:: WMSBase(__pydantic_self__, **data)
+.. py:class:: WMSBase(**data)
 
 
 
@@ -158,15 +152,13 @@ Module Contents
                 * **version** (:class:`str`, *optional*) -- The WMS service version which should be either 1.1.1 or 1.3.0, defaults to 1.3.0.
                 * **crs** (:class:`str`, *optional*) -- The spatial reference system to be used for requesting the data, defaults to
                   ``epsg:4326``.
-                * **expire_after** (:class:`int`, *optional*) -- Expiration time for response caching in seconds, defaults to -1 (never expire).
-                * **disable_caching** (:class:`bool`, *optional*) -- If ``True``, disable caching requests, defaults to False.
 
-   .. py:method:: get_validlayers(self)
+   .. py:method:: get_validlayers()
 
       Get the layers supported by the WMS service.
 
 
-   .. py:method:: validate_wms(self)
+   .. py:method:: validate_wms()
 
       Validate input arguments with the WMS service.
 

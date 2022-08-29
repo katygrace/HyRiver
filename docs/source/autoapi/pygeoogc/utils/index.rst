@@ -23,33 +23,33 @@ Module Contents
                   `ArcGIS <https://developers.arcgis.com/rest/services-reference/geographic-coordinate-systems.htm>`__
                   for reference.
 
-   .. py:method:: bbox(self)
+   .. py:method:: bbox()
 
       Query for a bbox.
 
 
-   .. py:method:: multipoint(self)
+   .. py:method:: multipoint()
 
       Query for a multi-point.
 
 
-   .. py:method:: point(self)
+   .. py:method:: point()
 
       Query for a point.
 
 
-   .. py:method:: polygon(self)
+   .. py:method:: polygon()
 
       Query for a polygon.
 
 
-   .. py:method:: polyline(self)
+   .. py:method:: polyline()
 
       Query for a polyline.
 
 
 
-.. py:class:: RetrySession(retries = 3, backoff_factor = 0.3, status_to_retry = (500, 502, 504), prefixes = ('https://', ), cache_name = None)
+.. py:class:: RetrySession(retries = 3, backoff_factor = 0.3, status_to_retry = (500, 502, 504), prefixes = ('https://', ), cache_name = None, expire_after = EXPIRE, disable = False)
 
    Configures the passed-in session to retry on failed requests.
 
@@ -63,13 +63,16 @@ Module Contents
                 * **prefixes** (:class:`tuple`, *optional*) -- The prefixes to consider, defaults to ("http://", "https://")
                 * **cache_name** (:class:`str`, *optional*) -- Path to a folder for caching the session, default to None which uses
                   system's temp directory.
+                * **expire_after** (:class:`int`, *optional*) -- Expiration time for the cache in seconds, defaults to -1 (never expire).
+                * **disable** (:class:`bool`, *optional*) -- If ``True`` temporarily disable caching requests and get new responses
+                  from the server, defaults to ``False``.
 
-   .. py:method:: get(self, url, payload = None, headers = None)
+   .. py:method:: get(url, payload = None, headers = None)
 
       Retrieve data from a url by GET and return the Response.
 
 
-   .. py:method:: post(self, url, payload = None, headers = None)
+   .. py:method:: post(url, payload = None, headers = None)
 
       Retrieve data from a url by POST and return the Response.
 
@@ -103,17 +106,6 @@ Module Contents
 
              * Raster width of a cell,
              * Raster height of a cell.
-
-
-.. py:function:: bbox_resolution(bbox, resolution, bbox_crs = DEF_CRS)
-
-   Image size of a bounding box WGS84 for a given resolution in meters.
-
-   :Parameters: * **bbox** (:class:`tuple`) -- A bounding box in WGS84 (west, south, east, north)
-                * **resolution** (:class:`float`) -- The resolution in meters
-                * **bbox_crs** (:class:`str`, *optional*) -- The spatial reference of the input bbox, default to EPSG:4326.
-
-   :returns: :class:`tuple` -- The width and height of the image
 
 
 .. py:function:: check_bbox(bbox)
